@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "trading-playbook"
+version = "0.1.0"
+description = "Python backtesting toolkit for quantitative trading strategies"
+authors = ["Tanam Bam Sinha"]
+readme = "README.md"
+packages = [{include = "trading_playbook", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^2.0.0"
+numpy = "^1.24.0"
+alpaca-py = "^0.43.0"
+python-dotenv = "^1.0.0"
+pyarrow = "^18.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+ruff = "^0.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Java-influenced style: explicit, readable
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (import sorting)
+    "N",  # pep8-naming
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

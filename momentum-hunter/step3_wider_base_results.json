@@ -1,0 +1,50 @@
+{
+  "step": 3,
+  "changes": [
+    "Volume 1.5x \u2192 1.2x",
+    "Base volatility 8% \u2192 12%"
+  ],
+  "results": [
+    {
+      "period": "Q1 2024",
+      "return": 5.795562399999995,
+      "win_rate": 56.25,
+      "profit_factor": 2.1856187416861297,
+      "trades": 16,
+      "avg_win": 1187.086666666667,
+      "avg_loss": -698.3168000000006
+    },
+    {
+      "period": "Q2 2024",
+      "return": -0.714360639999999,
+      "win_rate": 63.63636363636363,
+      "profit_factor": 0.8865276789234964,
+      "trades": 11,
+      "avg_win": 797.3001371428569,
+      "avg_loss": -1573.8653999999992
+    },
+    {
+      "period": "Q2 2025",
+      "return": -1.4265639999999986,
+      "win_rate": 50.0,
+      "profit_factor": 0.8481553916414604,
+      "trades": 20,
+      "avg_win": 796.8330000000003,
+      "avg_loss": -939.4893999999997
+    },
+    {
+      "period": "Q3 2025",
+      "return": 6.495345800000024,
+      "win_rate": 57.89473684210527,
+      "profit_factor": 1.9400358523177677,
+      "trades": 19,
+      "avg_win": 1218.6386,
+      "avg_loss": -863.7098499999994
+    }
+  ],
+  "avg_baseline": -0.9100000000000001,
+  "avg_step1": 0.425,
+  "avg_step3": 2.5374958900000055,
+  "improvement_from_baseline": 3.4474958900000057,
+  "improvement_from_step1": 2.1124958900000057
+}

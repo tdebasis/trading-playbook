@@ -1,0 +1,290 @@
+{
+  "project": {
+    "name": "Momentum Hunter",
+    "tagline": "Autonomous AI-Powered Day Trading System",
+    "goal": "Build an AI that actively trades (not just backtests) using Claude for decisions",
+    "status": "60% complete - MVP in progress",
+    "started": "2025-01-04",
+    "target_completion": "2 weeks to paper trading"
+  },
+
+  "team": {
+    "human": {
+      "name": "Tanam Bam Sinha",
+      "role": "Vision, strategy, judgment, final authority",
+      "key_contributions": [
+        "Insight: Need news/catalysts, not just stats",
+        "Insight: AI should trade, not just write code",
+        "Insight: Can build programmatic context for AI",
+        "Decision: Simplify stack (SQLite, skip Redis)",
+        "Decision: Move fast to paper trading"
+      ]
+    },
+    "ai": {
+      "name": "Claude",
+      "model": "claude-sonnet-4-5-20250929",
+      "role": "Architecture, reasoning, execution, tireless building",
+      "personality": "Excited, collaborative, pragmatic, move-fast mentality"
+    }
+  },
+
+  "journey": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Backtesting Strategies",
+        "outcome": "DP20 lost money, Morning Reversal barely profitable",
+        "lesson": "Simple patterns not enough"
+      },
+      {
+        "phase": 2,
+        "name": "Data-Driven Discovery",
+        "outcome": "Found Wed/Tue 11AM + momentum edge",
+        "lesson": "Market has predictable patterns when combined"
+      },
+      {
+        "phase": 3,
+        "name": "Pivot to Momentum + Catalysts",
+        "outcome": "Realized QQQ too limited, need catalyst-driven stocks",
+        "lesson": "Big money is in stocks with NEWS"
+      },
+      {
+        "phase": 4,
+        "name": "Building Autonomous System",
+        "outcome": "Currently building - 60% done",
+        "lesson": "AI should BE the trader, not just code generator"
+      }
+    ]
+  },
+
+  "architecture": {
+    "core_innovation": "Claude AI makes trading decisions via API, not rigid algorithms",
+    "components_completed": [
+      {
+        "name": "Market Scanner",
+        "file": "backend/scanner/market_scanner.py",
+        "purpose": "Find stocks with 2x+ volume, 4%+ movement",
+        "status": "complete"
+      },
+      {
+        "name": "News Aggregator",
+        "file": "backend/scanner/news_aggregator.py",
+        "purpose": "Detect catalysts (FDA, earnings, mergers) and sentiment",
+        "status": "complete"
+      },
+      {
+        "name": "Claude Decision Engine",
+        "file": "backend/brain/claude_engine.py",
+        "purpose": "AI analyzes opportunities and makes BUY/SELL/HOLD decisions",
+        "status": "complete"
+      },
+      {
+        "name": "SQLite Database",
+        "file": "backend/data/database.py",
+        "purpose": "Store trades, decisions, positions, performance",
+        "status": "complete"
+      }
+    ],
+    "components_remaining": [
+      {
+        "name": "Trade Executor",
+        "file": "backend/execution/trade_executor.py",
+        "purpose": "Execute orders via Alpaca API",
+        "estimate": "30 minutes"
+      },
+      {
+        "name": "Position Manager",
+        "file": "backend/execution/position_manager.py",
+        "purpose": "Monitor positions, check stop/target hits",
+        "estimate": "30 minutes"
+      },
+      {
+        "name": "Orchestrator",
+        "file": "backend/core/orchestrator.py",
+        "purpose": "Main loop - coordinates all components",
+        "estimate": "1 hour"
+      },
+      {
+        "name": "Terminal Dashboard",
+        "file": "backend/core/monitor.py",
+        "purpose": "Display live P&L, positions, decisions",
+        "estimate": "30 minutes"
+      }
+    ]
+  },
+
+  "key_decisions": [
+    {
+      "decision": "Use Claude API as decision engine (not rigid rules)",
+      "reasoning": "AI can understand context, adapt to situations, explain reasoning",
+      "impact": "Core innovation - makes us different from all other trading bots",
+      "status": "implemented"
+    },
+    {
+      "decision": "Focus on catalyst-driven momentum (not just technical patterns)",
+      "reasoning": "Need to know WHY stocks move. News/catalysts create explosive moves",
+      "impact": "Built news aggregator, scores catalyst importance",
+      "status": "implemented"
+    },
+    {
+      "decision": "Simplify stack - SQLite not PostgreSQL, skip Redis",
+      "reasoning": "Get to paper trading in 2 weeks, not 2 months. Prove it works first.",
+      "impact": "Accelerated timeline dramatically",
+      "status": "accepted"
+    },
+    {
+      "decision": "Paper trade before real money",
+      "reasoning": "Prove strategy works, identify bugs safely",
+      "impact": "30-day test period before risking capital",
+      "status": "planned"
+    }
+  ],
+
+  "breakthrough_insights": [
+    {
+      "insight": "Stats only might not be it - need catalysts",
+      "quote": "But how do you find stocks which have news behind them",
+      "author": "Tanam",
+      "impact": "Led to building news aggregator - game changer",
+      "importance": 10
+    },
+    {
+      "insight": "AI should run trades, not just algorithms",
+      "quote": "maybe you have to run the trade - i.e. you the AI not just the algorithm",
+      "author": "Tanam",
+      "impact": "Shifted from static code to live AI decision-making",
+      "importance": 10
+    },
+    {
+      "insight": "Can build programmatic context for continuous AI",
+      "quote": "we can build a program together wherein you can truly do this",
+      "author": "Tanam",
+      "impact": "Unlocked autonomous trading via Claude API",
+      "importance": 10
+    },
+    {
+      "insight": "Follow the winners (Ross Cameron approach)",
+      "quote": "We need to follow the folks who discovered the secret",
+      "author": "Tanam",
+      "impact": "Pivoted from QQQ to catalyst-driven momentum stocks",
+      "importance": 9
+    },
+    {
+      "insight": "Move fast, prove it works, then optimize",
+      "quote": "ok i accept all your recommendations including sqlite",
+      "author": "Tanam",
+      "impact": "Simplified stack, accelerated timeline",
+      "importance": 8
+    }
+  ],
+
+  "tech_stack": {
+    "language": "Python 3.11+",
+    "ai_engine": "Anthropic Claude API (Sonnet 4.5)",
+    "broker": "Alpaca API (paper trading)",
+    "database": "SQLite (can upgrade to PostgreSQL later)",
+    "caching": "In-memory Python dicts (can add Redis later)",
+    "dashboard": "Simple terminal output (can add React later)",
+    "deployment": "Local Python script (can add Docker later)",
+    "philosophy": "MVP first, production features when profitable"
+  },
+
+  "trading_strategy": {
+    "name": "Catalyst-Driven Momentum",
+    "entry_criteria": [
+      "Strong catalyst detected (FDA, earnings, merger, etc.)",
+      "Relative volume > 2x average",
+      "Price range: $3-$30",
+      "Float < 100M shares",
+      "Clear technical setup (bull flag, breakout)",
+      "Trading hours: 9:30-11:30 AM EST (best volume)"
+    ],
+    "risk_management": {
+      "max_risk_per_trade": "2%",
+      "min_reward_risk_ratio": "2:1",
+      "max_positions": 3,
+      "max_daily_loss": "$500",
+      "stop_loss": "Always set, no exceptions"
+    },
+    "exit_strategy": [
+      "Profit target hit (2:1 R/R)",
+      "Stop loss hit",
+      "Pattern breaks down",
+      "3:30 PM (close all positions)",
+      "News reverses"
+    ]
+  },
+
+  "performance_targets": {
+    "conservative": {
+      "trades_per_week": "3-4",
+      "win_rate": "65%",
+      "avg_rr": "2.5:1",
+      "monthly_return": "12-18%",
+      "annual_return": "144-216%"
+    },
+    "aggressive": {
+      "trades_per_day": "2-5",
+      "win_rate": "60%",
+      "avg_rr": "2:1",
+      "monthly_return": "20-40%",
+      "annual_return": "240-480%"
+    },
+    "success_criteria": [
+      "Profitable for 3 consecutive months",
+      "Max drawdown < 15%",
+      "Sharpe ratio > 1.5",
+      "Consistent execution (not luck)"
+    ]
+  },
+
+  "next_steps": {
+    "immediate": [
+      "Build trade_executor.py (30 min)",
+      "Build position_manager.py (30 min)",
+      "Build orchestrator.py (1 hour)",
+      "Build monitor.py (30 min)",
+      "Total: ~3 hours to paper trading"
+    ],
+    "week_1": [
+      "Run paper trading daily",
+      "Monitor performance",
+      "Fix bugs",
+      "Refine Claude prompts"
+    ],
+    "month_1": [
+      "Complete 30-day paper test",
+      "Analyze results",
+      "Optimize if needed",
+      "Decide: Go live or iterate"
+    ],
+    "month_2": [
+      "If profitable: Deploy real money (small amount)",
+      "Scale up if successful",
+      "Add production features if needed"
+    ]
+  },
+
+  "files_to_read_for_context": [
+    "SESSION_HISTORY.md",
+    "PROGRESS.md",
+    "README.md",
+    "REGULATIONS.md",
+    "backend/brain/claude_engine.py",
+    "backend/scanner/market_scanner.py",
+    "backend/scanner/news_aggregator.py"
+  ],
+
+  "session_metadata": {
+    "messages_exchanged": "150+",
+    "hours_spent": "~6",
+    "files_created": 10,
+    "lines_of_code": "3500+",
+    "breakthroughs": 5,
+    "excitement_level": "maximum",
+    "confidence": "high",
+    "momentum": "strong"
+  },
+
+  "continuation_prompt": "We're building Momentum Hunter - an AI trading system where Claude makes real-time decisions via API. We're 60% done. Built scanner, news aggregator, decision engine, database. Need to finish executor, position manager, and orchestrator. Then we paper trade. Read SESSION_HISTORY.md for full context."
+}

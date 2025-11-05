@@ -1,0 +1,39 @@
+{
+  "validation_type": "walk_forward",
+  "seen_periods": [
+    "Q1 2024",
+    "Q2 2024",
+    "Q2 2025",
+    "Q3 2025"
+  ],
+  "unseen_periods": [
+    "Q3 2024",
+    "Q4 2024"
+  ],
+  "unseen_results": [
+    {
+      "period": "Q3 2024",
+      "return": 0.7468352999999915,
+      "win_rate": 35.714285714285715,
+      "profit_factor": 1.088267144455993,
+      "trades": 14,
+      "avg_win": 1841.5828999999987,
+      "avg_loss": -1057.6348999999996,
+      "max_drawdown": 5.620964737992066
+    },
+    {
+      "period": "Q4 2024",
+      "return": 17.68954975000002,
+      "win_rate": 66.66666666666666,
+      "profit_factor": 3.528616512523392,
+      "trades": 21,
+      "avg_win": 1763.2351535714283,
+      "avg_loss": -1399.1484799999985,
+      "max_drawdown": 3.1499882962219496
+    }
+  ],
+  "seen_avg_return": 2.54,
+  "unseen_avg_return": 9.218192525000005,
+  "difference": 6.6781925250000045,
+  "validation_passed": true
+}

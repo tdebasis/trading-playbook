@@ -1,0 +1,112 @@
+{
+  "test_period": "Aug-Sep 2025",
+  "total_days": 10,
+  "total_return_pct": -11.904105999999992,
+  "daily_win_rate": 0.0,
+  "trade_win_rate": 50.0,
+  "profit_factor": 0.045839225982438656,
+  "max_drawdown": 11.904105999999992,
+  "total_trades": 40,
+  "daily_results": [
+    {
+      "date": "2025-08-06",
+      "day_of_week": "Wednesday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-07",
+      "day_of_week": "Thursday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-11",
+      "day_of_week": "Monday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-13",
+      "day_of_week": "Wednesday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-18",
+      "day_of_week": "Monday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-20",
+      "day_of_week": "Wednesday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-25",
+      "day_of_week": "Monday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-08-27",
+      "day_of_week": "Wednesday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-09-03",
+      "day_of_week": "Wednesday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    },
+    {
+      "date": "2025-09-08",
+      "day_of_week": "Monday",
+      "return_pct": -1.190410599999999,
+      "return_dollars": -1190.410599999999,
+      "trades": 4,
+      "winners": 2,
+      "losers": 2,
+      "win_rate": 50.0
+    }
+  ]
+}

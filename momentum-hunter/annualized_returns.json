@@ -1,0 +1,22 @@
+{
+  "quarterly_returns": {
+    "Q1 2024": 5.8,
+    "Q2 2024": -0.71,
+    "Q3 2024": 0.75,
+    "Q4 2024": 17.69,
+    "Q2 2025": -1.43,
+    "Q3 2025": 6.5
+  },
+  "average_quarterly_return": 4.766666666666667,
+  "annualized_return_cagr": 19.576757742854657,
+  "starting_capital": 10000,
+  "year1_value": 11957.675774285466,
+  "year1_profit": 1957.675774285466,
+  "volatility_std_dev": 6.5270071412725015,
+  "best_case_annual": 53.41997756396282,
+  "expected_annual": 20.47377116740867,
+  "worst_case_annual": -6.857606356908352,
+  "positive_quarters": 4,
+  "total_quarters": 6,
+  "outperformance_vs_spy": 9.576757742854657
+}
