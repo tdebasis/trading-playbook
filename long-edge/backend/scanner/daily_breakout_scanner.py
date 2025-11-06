@@ -16,10 +16,19 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from dataclasses import dataclass
 import logging
+import sys
+from pathlib import Path
 
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+
+# Add parent directory to path for config import
+backend_dir = Path(__file__).parent.parent
+project_dir = backend_dir.parent
+sys.path.insert(0, str(project_dir))
+
+from config.universe import get_universe
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +139,7 @@ class DailyBreakoutScanner:
     - Breaking above base on 1.5x+ volume
     """
 
-    def __init__(self, api_key: str, secret_key: str):
+    def __init__(self, api_key: str, secret_key: str, universe: str = 'default'):
         self.client = StockHistoricalDataClient(api_key, secret_key)
 
         # Screening criteria
@@ -141,19 +150,10 @@ class DailyBreakoutScanner:
         self.min_price = 10.0  # Avoid penny stocks
         self.max_base_volatility = 0.12  # 12% max volatility (was 8%, too tight for growth stocks)
 
-        # Watchlist (can be expanded to full universe scan)
-        self.watchlist = [
-            # Tech momentum
-            'NVDA', 'TSLA', 'AMD', 'PLTR', 'SNOW', 'CRWD',
-            # Biotech (high beta)
-            'MRNA', 'BNTX', 'SAVA', 'SGEN',
-            # Consumer/Growth
-            'SHOP', 'SQ', 'COIN', 'RBLX',
-            # Previous momentum leaders
-            'GME', 'AMC', 'PTON', 'SNAP',
-            # Quality growth
-            'MSFT', 'AAPL', 'AMZN', 'GOOGL', 'META'
-        ]
+        # Watchlist - now loaded from config file
+        # Options: 'default', 'tech', 'high_vol', 'mega_caps', 'extended'
+        self.watchlist = get_universe(universe)
+        logger.info(f"Loaded '{universe}' universe: {len(self.watchlist)} stocks")
 
     def scan(self, scan_date: Optional[datetime] = None) -> List[DailyBreakoutCandidate]:
         """
