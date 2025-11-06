@@ -468,6 +468,11 @@ poetry run python -m trading_playbook.cli.backtest \
 - `docs: Update architecture overview`
 - `test: Add unit tests for EMA calculation`
 
+**Commit Message Policy:**
+- ❌ **NEVER include Claude Code attribution or "Co-Authored-By: Claude" in commit messages**
+- ✅ Write commit messages as if authored by the human developer
+- ✅ Focus on what changed and why, not who wrote it
+
 ---
 
 ## Documentation Standards
