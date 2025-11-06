@@ -110,3 +110,5 @@ credentials.json
 # Documentation build
 docs/_build/
 site/
+cache/
+backend/backend
