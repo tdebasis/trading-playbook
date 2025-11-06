@@ -39,10 +39,10 @@ class SmartPosition:
     shares: int
     hard_stop: float  # 8% hard stop
 
-    # Smart exit tracking
-    highest_high: float = 0.0
+    # Smart exit tracking (close-based, no lookahead bias)
+    highest_close: float = 0.0  # Track highest CLOSE, not intraday high
     trailing_stop: float = 0.0
-    prev_high: float = 0.0  # For lower high detection
+    prev_close: float = 0.0  # For momentum detection
     sma_5: List[float] = field(default_factory=list)
 
     # Exit info
@@ -163,77 +163,76 @@ class SmartExitBacktester:
                 continue
 
             current_bar = bars[-1]
-            current_price = float(current_bar.close)
-            current_high = float(current_bar.high)
-            current_low = float(current_bar.low)
+            current_close = float(current_bar.close)
+            current_low = float(current_bar.low)  # Still use for hard stop check
 
             # Calculate ATR (Average True Range) for trailing stop
             atr = self._calculate_atr(bars, period=10)
 
-            # Update highest high
-            if current_high > position.highest_high:
-                position.highest_high = current_high
+            # Update highest CLOSE (not high - no lookahead bias)
+            if current_close > position.highest_close:
+                position.highest_close = current_close
 
                 # HYBRID TRAILING: Tighten stop as profit increases
-                profit_pct = ((position.highest_high - position.entry_price) / position.entry_price) * 100
+                profit_pct = ((position.highest_close - position.entry_price) / position.entry_price) * 100
 
                 if profit_pct >= 15:
-                    # +15%+: Very tight trail (5% from peak)
-                    position.trailing_stop = position.highest_high * 0.95
+                    # +15%+: Very tight trail (5% from peak close)
+                    position.trailing_stop = position.highest_close * 0.95
                 elif profit_pct >= 10:
                     # +10-15%: Tighter trail (1x ATR)
-                    position.trailing_stop = current_high - (atr * 1.0)
+                    position.trailing_stop = position.highest_close - (atr * 1.0)
                 else:
                     # 0-10%: Normal trail (2x ATR)
-                    position.trailing_stop = current_high - (atr * 2.0)
+                    position.trailing_stop = position.highest_close - (atr * 2.0)
 
             # Calculate 5-day MA
             if len(bars) >= 5:
                 sma_5 = sum(float(b.close) for b in bars[-5:]) / 5
             else:
-                sma_5 = current_price
+                sma_5 = current_close
 
             # EXIT LOGIC (in priority order)
 
-            # 1. HARD STOP (always active)
+            # 1. HARD STOP (always active) - use intraday low for hard stops
             if current_low <= position.hard_stop:
                 logger.info(f"  🛑 {position.symbol}: Hard stop at ${current_low:.2f} (stop: ${position.hard_stop:.2f})")
                 self._close_position(position, date, "HARD_STOP", position.hard_stop)
                 continue
 
-            # 2. TRAILING STOP (after we've established a high)
-            if position.highest_high > position.entry_price * 1.05:  # At least 5% up
-                if current_low <= position.trailing_stop:
-                    logger.info(f"  📉 {position.symbol}: Trailing stop at ${current_low:.2f} (trail: ${position.trailing_stop:.2f})")
-                    self._close_position(position, date, "TRAILING_STOP", position.trailing_stop)
+            # 2. TRAILING STOP (after we've established profit) - use CLOSE not low
+            if position.highest_close > position.entry_price * 1.05:  # At least 5% up
+                if current_close < position.trailing_stop:  # Close breaks trail, not intraday low
+                    logger.info(f"  📉 {position.symbol}: Trailing stop - close ${current_close:.2f} < trail ${position.trailing_stop:.2f}")
+                    self._close_position(position, date, "TRAILING_STOP", current_close)  # Exit at close
                     continue
 
             # 3. TREND BREAK (close below 5-day MA - but only if current profit < 3%)
             # Logic: If we're up 3%+ NOW, let trailing stop handle it
             # Only use MA break to cut small losses/gains before they become bigger losses
-            current_profit_pct = ((current_price - position.entry_price) / position.entry_price) * 100
+            current_profit_pct = ((current_close - position.entry_price) / position.entry_price) * 100
             if current_profit_pct < 3.0:  # Less than +3% profit right now
-                if current_price < sma_5:
-                    logger.info(f"  📊 {position.symbol}: Broke 5-day MA at ${current_price:.2f} (MA: ${sma_5:.2f}, +{current_profit_pct:.1f}%)")
-                    self._close_position(position, date, "MA_BREAK", current_price)
+                if current_close < sma_5:
+                    logger.info(f"  📊 {position.symbol}: Broke 5-day MA at ${current_close:.2f} (MA: ${sma_5:.2f}, +{current_profit_pct:.1f}%)")
+                    self._close_position(position, date, "MA_BREAK", current_close)
                     continue
 
-            # 4. LOWER HIGH (momentum weakening after 5%+ gain)
-            if position.highest_high > position.entry_price * 1.05:  # At least 5% up
-                if position.prev_high > 0 and current_high < position.prev_high:
-                    # Stock made a lower high - momentum fading
-                    logger.info(f"  ⚠️  {position.symbol}: Lower high at ${current_high:.2f} (prev: ${position.prev_high:.2f})")
-                    self._close_position(position, date, "LOWER_HIGH", current_price)
+            # 4. LOWER CLOSE (momentum weakening after 5%+ gain)
+            if position.highest_close > position.entry_price * 1.05:  # At least 5% up
+                if position.prev_close > 0 and current_close < position.prev_close:
+                    # Stock made a lower close - momentum fading
+                    logger.info(f"  ⚠️  {position.symbol}: Lower close at ${current_close:.2f} (prev: ${position.prev_close:.2f})")
+                    self._close_position(position, date, "LOWER_HIGH", current_close)
                     continue
 
-            # 5. TIME STOP (backup, 15 days max)
-            if position.hold_days(date) >= 15:
-                logger.info(f"  ⏰ {position.symbol}: Time stop at ${current_price:.2f} (held 15 days)")
-                self._close_position(position, date, "TIME", current_price)
+            # 5. TIME STOP (backup, 17 days max)
+            if position.hold_days(date) >= 17:
+                logger.info(f"  ⏰ {position.symbol}: Time stop at ${current_close:.2f} (held 17 days)")
+                self._close_position(position, date, "TIME", current_close)
                 continue
 
             # Update for next day
-            position.prev_high = current_high
+            position.prev_close = current_close
 
     def _calculate_atr(self, bars: list, period: int = 10) -> float:
         """Calculate Average True Range."""
@@ -305,9 +304,9 @@ class SmartExitBacktester:
                 entry_price=entry_price,
                 shares=shares,
                 hard_stop=entry_price * (1 - self.stop_loss_percent),
-                highest_high=entry_price,
+                highest_close=entry_price,  # Start with entry price as highest close
                 trailing_stop=entry_price * (1 - self.stop_loss_percent),
-                prev_high=entry_price
+                prev_close=entry_price
             )
 
             self.positions.append(position)

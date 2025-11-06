@@ -98,8 +98,8 @@ class CachedDataClient:
 
                 response = self.client.get_stock_bars(single_request)
 
-                if symbol in response:
-                    bars = list(response[symbol])
+                if symbol in response.data:
+                    bars = list(response.data[symbol])
                     result_data[symbol] = bars
 
                     # Save to cache

@@ -6,13 +6,17 @@ Defines the list of stocks we scan for momentum breakouts.
 Last Updated: November 5, 2025
 """
 
-# Current watchlist (23 stocks)
+# Current watchlist (27 stocks)
 WATCHLIST = [
-    # Tech Momentum Leaders (9 stocks)
-    # High beta, institutional favorites, AI/cloud/cybersecurity trends
+    # Tech & Semiconductor Leaders (13 stocks)
+    # High beta, institutional favorites, AI/cloud/cybersecurity/semiconductor trends
     'NVDA',   # NVIDIA - AI chips
     'TSLA',   # Tesla - EV leader
     'AMD',    # AMD - CPU/GPU competitor
+    'INTC',   # Intel - Semiconductor turnaround
+    'ASML',   # ASML - Lithography equipment
+    'TSMC',   # TSMC - Largest foundry
+    'MU',     # Micron - Memory chips
     'PLTR',   # Palantir - AI/Data analytics
     'SNOW',   # Snowflake - Cloud data
     'CRWD',   # CrowdStrike - Cybersecurity

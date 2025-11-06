@@ -53,10 +53,10 @@ class ScaledPosition:
     # Partial exit tracking
     partial_exits: List[Dict] = field(default_factory=list)
 
-    # Smart exit tracking (for final 25%)
-    highest_high: float = 0.0
+    # Smart exit tracking (for final 25%) - close-based, no lookahead
+    highest_close: float = 0.0  # Track highest CLOSE, not intraday high
     trailing_stop: float = 0.0
-    prev_high: float = 0.0
+    prev_close: float = 0.0  # For momentum detection
 
     # Final exit info
     final_exit_date: Optional[datetime] = None
@@ -148,9 +148,11 @@ class ScaledExitBacktester:
         logger.info(f"Starting scaled exit backtest: {start_date.date()} to {end_date.date()}")
         logger.info(f"Scale out: 25% @ +{self.scale_1_pct}%, 25% @ +{self.scale_2_pct}%, 25% @ +{self.scale_3_pct}%, trail final 25%")
 
-        current_date = start_date
+        # Get trading days only (weekdays)
+        trading_days = self._get_trading_days(start_date, end_date)
+        logger.info(f"Found {len(trading_days)} trading days to test")
 
-        while current_date <= end_date:
+        for current_date in trading_days:
             # Check for new signals
             candidates = self.scanner.scan(current_date)
 
@@ -166,19 +168,20 @@ class ScaledExitBacktester:
             equity = self._calculate_equity(current_date)
             self.equity_curve.append(equity)
 
-            # Move to next day
-            current_date += timedelta(days=1)
-
         # Close any remaining positions at end (use last valid trading date)
-        last_valid_date = current_date - timedelta(days=1)
+        last_valid_date = end_date
         for pos in list(self.positions):
-            final_price = self._get_current_price(pos.symbol, last_valid_date)
-            if final_price == 0.0:
-                # Fallback: try to get the last known price from recent bars
-                bars = self._get_recent_bars(pos.symbol, last_valid_date, lookback=5)
-                if bars:
-                    final_price = float(bars[-1].close)
-            self._close_final_position(pos, last_valid_date, "END_OF_BACKTEST", final_price)
+            # Try to get the most recent price data
+            bars = self._get_recent_bars(pos.symbol, last_valid_date, lookback=5)
+            if bars and len(bars) > 0:
+                final_price = float(bars[-1].close)
+                actual_exit_date = bars[-1].timestamp.replace(tzinfo=None) if hasattr(bars[-1].timestamp, 'replace') else bars[-1].timestamp
+            else:
+                logger.warning(f"⚠️  No price data for {pos.symbol} at backtest end, using entry price")
+                final_price = pos.entry_price
+                actual_exit_date = last_valid_date
+
+            self._close_final_position(pos, actual_exit_date, "END_OF_BACKTEST", final_price)
 
         return self._generate_results()
 
@@ -200,7 +203,7 @@ class ScaledExitBacktester:
             initial_shares=shares,
             current_shares=shares,
             hard_stop=hard_stop,
-            highest_high=candidate.close
+            highest_close=candidate.close  # Start with entry as highest close
         )
 
         self.positions.append(position)
@@ -215,92 +218,93 @@ class ScaledExitBacktester:
             # Get price data
             bars = self._get_recent_bars(position.symbol, date, lookback=10)
             if not bars or len(bars) == 0:
+                logger.warning(f"⚠️  No bars for {position.symbol} on {date.strftime('%Y-%m-%d')}, skipping exit checks")
                 continue
 
             current_bar = bars[-1]
-            current_price = float(current_bar.close)
-            current_high = float(current_bar.high)
-            current_low = float(current_bar.low)
+            current_close = float(current_bar.close)  # Use close, not high
+            current_low = float(current_bar.low)  # Still use for hard stop
 
-            profit_pct = position.profit_pct(current_price)
+            profit_pct = position.profit_pct(current_close)
 
-            # SCALED EXITS (take profits incrementally)
+            # SCALED EXITS (take profits incrementally) - use CLOSE prices
+            #  These are profit targets so using close is realistic
 
             # 1. First 25% at +8%
             if not position.scaled_25_pct and profit_pct >= self.scale_1_pct:
                 shares_to_sell = position.initial_shares // 4
-                self._partial_exit(position, date, current_price, shares_to_sell, f"SCALE_1 (+{profit_pct:.1f}%)")
+                self._partial_exit(position, date, current_close, shares_to_sell, f"SCALE_1 (+{profit_pct:.1f}%)")
                 position.scaled_25_pct = True
 
             # 2. Second 25% at +15%
             if position.scaled_25_pct and not position.scaled_50_pct and profit_pct >= self.scale_2_pct:
                 shares_to_sell = position.initial_shares // 4
-                self._partial_exit(position, date, current_price, shares_to_sell, f"SCALE_2 (+{profit_pct:.1f}%)")
+                self._partial_exit(position, date, current_close, shares_to_sell, f"SCALE_2 (+{profit_pct:.1f}%)")
                 position.scaled_50_pct = True
 
             # 3. Third 25% at +25%
             if position.scaled_50_pct and not position.scaled_75_pct and profit_pct >= self.scale_3_pct:
                 shares_to_sell = position.initial_shares // 4
-                self._partial_exit(position, date, current_price, shares_to_sell, f"SCALE_3 (+{profit_pct:.1f}%)")
+                self._partial_exit(position, date, current_close, shares_to_sell, f"SCALE_3 (+{profit_pct:.1f}%)")
                 position.scaled_75_pct = True
 
             # If no shares left (shouldn't happen but defensive)
             if position.current_shares == 0:
-                self._close_final_position(position, date, "FULLY_SCALED", current_price)
+                self._close_final_position(position, date, "FULLY_SCALED", current_close)
                 continue
 
-            # SMART EXITS on remaining shares
+            # SMART EXITS on remaining shares (close-based, no lookahead)
 
             # Calculate ATR for trailing stop
             atr = self._calculate_atr(bars, period=10)
 
-            # Update highest high
-            if current_high > position.highest_high:
-                position.highest_high = current_high
+            # Update highest CLOSE (not high)
+            if current_close > position.highest_close:
+                position.highest_close = current_close
 
                 # Hybrid trailing (tighter as profit grows)
                 if profit_pct >= 30:
-                    position.trailing_stop = position.highest_high * 0.95  # 5% trail
+                    position.trailing_stop = position.highest_close * 0.95  # 5% trail
                 elif profit_pct >= 20:
-                    position.trailing_stop = current_high - (atr * 1.0)  # 1x ATR
+                    position.trailing_stop = position.highest_close - (atr * 1.0)  # 1x ATR
                 else:
-                    position.trailing_stop = current_high - (atr * 2.0)  # 2x ATR
+                    position.trailing_stop = position.highest_close - (atr * 2.0)  # 2x ATR
 
             # Calculate 5-day MA
             if len(bars) >= 5:
                 sma_5 = sum(float(b.close) for b in bars[-5:]) / 5
             else:
-                sma_5 = current_price
+                sma_5 = current_close
 
             # EXIT LOGIC (on remaining shares)
 
-            # 1. HARD STOP
+            # 1. HARD STOP - use intraday low for hard stops (acceptable)
             if current_low <= position.hard_stop:
                 logger.info(f"  🛑 {position.symbol}: Hard stop hit")
                 self._close_final_position(position, date, "HARD_STOP", position.hard_stop)
                 continue
 
-            # 2. TRAILING STOP (after scaling out at least once)
-            if position.scaled_25_pct and position.highest_high > position.entry_price * 1.08:
-                if current_low <= position.trailing_stop:
-                    logger.info(f"  📉 {position.symbol}: Trailing stop at ${current_low:.2f}")
-                    self._close_final_position(position, date, "TRAILING_STOP", position.trailing_stop)
+            # 2. TRAILING STOP (after scaling out at least once) - use CLOSE not low
+            if position.scaled_25_pct and position.highest_close > position.entry_price * 1.08:
+                if current_close < position.trailing_stop:  # Close breaks trail
+                    logger.info(f"  📉 {position.symbol}: Trailing stop - close ${current_close:.2f} < trail ${position.trailing_stop:.2f}")
+                    self._close_final_position(position, date, "TRAILING_STOP", current_close)
                     continue
 
             # 3. TREND BREAK (close below 5-day MA after scaling)
-            if position.scaled_25_pct and current_price < sma_5:
-                logger.info(f"  📊 {position.symbol}: MA break at ${current_price:.2f}")
-                self._close_final_position(position, date, "MA_BREAK", current_price)
+            if position.scaled_25_pct and current_close < sma_5:
+                logger.info(f"  📊 {position.symbol}: MA break at ${current_close:.2f}")
+                self._close_final_position(position, date, "MA_BREAK", current_close)
                 continue
 
             # 4. TIME STOP (20 days - longer since we scaled out)
             if position.hold_days(date) >= 20:
                 logger.info(f"  ⏰ {position.symbol}: Time stop (20 days)")
-                self._close_final_position(position, date, "TIME", current_price)
+                self._close_final_position(position, date, "TIME", current_close)
                 continue
 
             # Update for next day
-            position.prev_high = current_high
+            position.prev_close = current_close
 
     def _partial_exit(self, position: ScaledPosition, date: datetime, price: float, shares: int, reason: str):
         """Partially exit position (scale out)."""
@@ -367,7 +371,7 @@ class ScaledExitBacktester:
         """Fetch recent bars for a symbol."""
         try:
             request = StockBarsRequest(
-                symbol_or_symbols=symbol,
+                symbol_or_symbols=[symbol],
                 timeframe=TimeFrame.Day,
                 start=date - timedelta(days=lookback + 5),
                 end=date
@@ -395,6 +399,16 @@ class ScaledExitBacktester:
             if current_price:
                 equity += pos.position_value(current_price)
         return equity
+
+    def _get_trading_days(self, start: datetime, end: datetime) -> List[datetime]:
+        """Get trading days (weekdays only)."""
+        days = []
+        current = start
+        while current <= end:
+            if current.weekday() < 5:  # Monday=0, Friday=4
+                days.append(current)
+            current += timedelta(days=1)
+        return days
 
     def _generate_results(self):
         """Generate backtest results."""
