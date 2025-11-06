@@ -208,10 +208,13 @@ class SmartExitBacktester:
                     self._close_position(position, date, "TRAILING_STOP", position.trailing_stop)
                     continue
 
-            # 3. TREND BREAK (close below 5-day MA after being up 3%+)
-            if position.highest_high > position.entry_price * 1.03:  # At least 3% up
+            # 3. TREND BREAK (close below 5-day MA - but only if current profit < 3%)
+            # Logic: If we're up 3%+ NOW, let trailing stop handle it
+            # Only use MA break to cut small losses/gains before they become bigger losses
+            current_profit_pct = ((current_price - position.entry_price) / position.entry_price) * 100
+            if current_profit_pct < 3.0:  # Less than +3% profit right now
                 if current_price < sma_5:
-                    logger.info(f"  📊 {position.symbol}: Broke 5-day MA at ${current_price:.2f} (MA: ${sma_5:.2f})")
+                    logger.info(f"  📊 {position.symbol}: Broke 5-day MA at ${current_price:.2f} (MA: ${sma_5:.2f}, +{current_profit_pct:.1f}%)")
                     self._close_position(position, date, "MA_BREAK", current_price)
                     continue
 

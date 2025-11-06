@@ -145,14 +145,15 @@ class DailyBreakoutCandidate:
         score += rs_score
 
         # CRITICAL: Determine required threshold based on volume
+        # RELAXED THRESHOLDS (v2): More permissive to allow more trades through
         if volume_score >= 1.5:
-            required_score = 4.0  # High volume = normal threshold
+            required_score = 2.0  # High volume = easy pass
         elif volume_score >= 1.0:
-            required_score = 5.0  # Medium volume = need stronger price
+            required_score = 2.5  # Medium volume = still reasonable
         elif volume_score >= 0.5:
-            required_score = 6.0  # Low volume = need MUCH stronger price
+            required_score = 3.0  # Low volume = need decent price action
         else:
-            required_score = 8.0  # Very low volume = nearly impossible
+            required_score = 4.0  # Very low volume = need strong price action
 
         return {
             'total': score,
@@ -252,11 +253,21 @@ class DailyBreakoutScannerScoring:
         )
 
         bars_dict = self.client.get_stock_bars(request)
-        if symbol not in bars_dict:
-            return None
 
-        bars = bars_dict[symbol]
-        if len(bars) < 200:
+        # Handle both cached and non-cached responses
+        if hasattr(bars_dict, 'data'):
+            # Regular Alpaca API response
+            if symbol not in bars_dict.data:
+                return None
+            bars = list(bars_dict.data[symbol])
+        else:
+            # Dict response (from cache)
+            if symbol not in bars_dict:
+                return None
+            bars = list(bars_dict[symbol])
+        # RELAXED: 150 bars minimum (was 200) - API often returns ~170-180 days
+        # Still enough for SMA200 approximation (use what we have)
+        if len(bars) < 150:
             return None
 
         # Get latest bar
@@ -272,7 +283,8 @@ class DailyBreakoutScannerScoring:
 
         sma_20 = sum(closes[-20:]) / 20
         sma_50 = sum(closes[-50:]) / 50
-        sma_200 = sum(closes[-200:]) / 200
+        # Use all available bars for SMA200 approximation (may be less than 200)
+        sma_200 = sum(closes) / len(closes) if len(closes) < 200 else sum(closes[-200:]) / 200
 
         ema_20 = self._calculate_ema(closes, 20)
         ema_50 = self._calculate_ema(closes, 50)

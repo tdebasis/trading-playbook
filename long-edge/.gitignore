@@ -1,6 +1,8 @@
 # Momentum Hunter - Git Ignore
 
 # Claude AI context files (may contain sensitive info)
+.claude/
+CLAUDE.md
 claude.md
 *.claude.md
 
