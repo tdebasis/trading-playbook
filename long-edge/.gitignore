@@ -112,3 +112,4 @@ docs/_build/
 site/
 cache/
 backend/backend
+docs/session-history/
