@@ -183,7 +183,7 @@ This project follows [Havq Claude Documentation Standards](https://github.com/ta
 
 ## Contributing
 
-This is a personal trading research project. Design discussions captured in:
+Open source trading infrastructure project. Design discussions and architecture:
 - [CLAUDE.md](CLAUDE.md) - Complete architecture guide
 - [docs/system-design/](docs/system-design/) - Detailed technical specs
 
