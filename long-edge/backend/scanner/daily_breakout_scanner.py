@@ -30,6 +30,11 @@ sys.path.insert(0, str(project_dir))
 
 from config.universe import get_universe
 
+# Import interfaces and registration
+sys.path.insert(0, str(backend_dir))
+from interfaces import Candidate
+from strategies import register_scanner
+
 logger = logging.getLogger(__name__)
 
 
@@ -128,6 +133,7 @@ class DailyBreakoutCandidate:
                 f"{self.distance_from_52w_high:.1f}% from high)")
 
 
+@register_scanner('daily_breakout')
 class DailyBreakoutScanner:
     """
     Scans for daily breakout opportunities in Minervini/O'Neil style.
@@ -137,10 +143,13 @@ class DailyBreakoutScanner:
     - Near 52-week highs (within 15-25%)
     - Consolidating in tight base (3-12 weeks, <5% volatility)
     - Breaking above base on 1.5x+ volume
+
+    Implements ScannerProtocol for plug-and-play architecture.
     """
 
     def __init__(self, api_key: str, secret_key: str, universe: str = 'default'):
         self.client = StockHistoricalDataClient(api_key, secret_key)
+        self._universe_name = universe
 
         # Screening criteria
         self.min_consolidation_days = 10  # At least 2 weeks
@@ -154,6 +163,21 @@ class DailyBreakoutScanner:
         # Options: 'default', 'tech', 'high_vol', 'mega_caps', 'extended'
         self.watchlist = get_universe(universe)
         logger.info(f"Loaded '{universe}' universe: {len(self.watchlist)} stocks")
+
+    @property
+    def strategy_name(self) -> str:
+        """Return strategy identifier for ScannerProtocol."""
+        return 'daily_breakout'
+
+    @property
+    def timeframe(self) -> str:
+        """Return trading timeframe for ScannerProtocol."""
+        return 'daily'
+
+    @property
+    def universe(self) -> List[str]:
+        """Return list of symbols monitored for ScannerProtocol."""
+        return self.watchlist
 
     def scan(self, scan_date: Optional[datetime] = None) -> List[DailyBreakoutCandidate]:
         """
@@ -195,6 +219,84 @@ class DailyBreakoutScanner:
                 logger.info(f"  {i}. {c}")
 
         return candidates
+
+    def scan_standardized(self, scan_date: Optional[datetime] = None) -> List[Candidate]:
+        """
+        Scan for opportunities and return standardized Candidate objects.
+
+        This method implements the ScannerProtocol interface by converting
+        internal DailyBreakoutCandidate objects to the standardized Candidate format.
+
+        Args:
+            scan_date: Date to scan (default: today)
+
+        Returns:
+            List of standardized Candidate objects sorted by score (best first)
+        """
+        # Use existing scan logic
+        internal_candidates = self.scan(scan_date)
+
+        # Convert to standardized format
+        return [self._to_candidate(c) for c in internal_candidates]
+
+    def _to_candidate(self, internal: DailyBreakoutCandidate) -> Candidate:
+        """
+        Convert internal DailyBreakoutCandidate to standardized Candidate.
+
+        This adapter method preserves all internal data in the strategy_data dict
+        while providing the standard interface for execution systems.
+
+        Args:
+            internal: Internal candidate representation
+
+        Returns:
+            Standardized Candidate object
+        """
+        # Calculate suggested stop (8% below entry)
+        suggested_stop = internal.close * 0.92
+
+        # No fixed target - let exit strategy determine
+        suggested_target = None
+
+        return Candidate(
+            symbol=internal.symbol,
+            scan_date=internal.date.date(),
+            score=internal.score(),
+            entry_price=internal.close,
+            suggested_stop=suggested_stop,
+            suggested_target=suggested_target,
+            strategy_data={
+                # Price action
+                'volume': internal.volume,
+                'close': internal.close,
+
+                # Breakout metrics
+                'consolidation_high': internal.consolidation_high,
+                'consolidation_days': internal.consolidation_days,
+                'breakout_volume_ratio': internal.breakout_volume_ratio,
+
+                # Trend strength - SMA
+                'sma_20': internal.sma_20,
+                'sma_50': internal.sma_50,
+                'sma_200': internal.sma_200,
+
+                # Trend strength - EMA
+                'ema_20': internal.ema_20,
+                'ema_50': internal.ema_50,
+                'ema_200': internal.ema_200,
+
+                # Position metrics
+                'distance_from_52w_high': internal.distance_from_52w_high,
+
+                # Pattern quality
+                'base_tightness': internal.base_tightness,
+                'relative_strength': internal.relative_strength,
+
+                # Scoring breakdown (for analysis)
+                'score_sma': internal.score(use_ema=False),
+                'score_ema': internal.score(use_ema=True),
+            }
+        )
 
     def _calculate_ema(self, bars: list, period: int) -> float:
         """
