@@ -86,8 +86,7 @@ trading-playbook/
 │   └── cli/                 # Command-line interface
 ├── tests/                   # (To be created)
 ├── data/cache/              # Local parquet cache
-├── output/                  # Backtest results
-└── CLAUDE.md                # AI context & architecture guide
+└── output/                  # Backtest results
 ```
 
 ## Core Concepts
@@ -175,17 +174,16 @@ poetry run python -m trading_playbook.cli.backtest \
 
 ## Documentation Standards
 
-This project follows [Havq Claude Documentation Standards](https://github.com/tanambamsinha/havq-docs):
-- Keep CLAUDE.md focused on architecture (600-800 lines)
+This project follows structured documentation practices:
 - Detailed system design in `docs/system-design/`
-- Strategy specs separate from implementation
-- Session histories with 90-day retention
+- Strategy specifications separate from implementation
+- Comprehensive backtesting reports in `docs/backtest-reports/`
 
 ## Contributing
 
 Open source trading infrastructure project. Design discussions and architecture:
-- [CLAUDE.md](CLAUDE.md) - Complete architecture guide
 - [docs/system-design/](docs/system-design/) - Detailed technical specs
+- [docs/strategies/](docs/strategies/) - Strategy specifications
 
 ## License
 
