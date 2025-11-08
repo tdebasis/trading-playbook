@@ -189,7 +189,7 @@ This is a personal trading research project. Design discussions captured in:
 
 ## License
 
-Private research project. Not licensed for public use.
+MIT License - See individual project LICENSE files for details.
 
 ---
 
