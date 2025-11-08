@@ -1,5 +1,7 @@
 # LongEdge 📈
 
+**Professional-grade quantitative trading infrastructure for systematic strategy development and backtesting.**
+
 **Daily Breakout Momentum Trading System - Long Only**
 
 A systematic momentum trading system that identifies growth stocks breaking out of consolidation bases using Minervini/O'Neil methodology. Combines quantitative screening with AI-powered decision making for bull market alpha generation.
