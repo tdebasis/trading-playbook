@@ -510,12 +510,6 @@ trading-playbook/
 │   ├── analysis/                # Analysis scripts
 │   └── operations/              # Operational scripts
 │
-├── compare_*.py                 # STRATEGY COMPARISON SCRIPTS (root level)
-│   ├── compare_exits_6month.py
-│   ├── compare_scanner_params_2025.py
-│   └── compare_exit_optimization_2025.py
-│
-├── test_3month_verification.py  # Verification backtest
 ├── backtest.py                  # Main backtest entry point
 ├── run.py                       # System runner
 ├── monitor.py                   # System monitor

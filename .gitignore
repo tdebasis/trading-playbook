@@ -231,5 +231,8 @@ docs/research-private/
 # Trading-specific caches
 cache_scaled_exits/
 
+# Temporary working scripts (local experiments, one-off analysis)
+tmp-scripts/
+
 # macOS metadata
 .DS_Store

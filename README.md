@@ -100,8 +100,9 @@ trading-playbook/
 │   ├── workflows/                    # Trading workflows
 │   └── research-private/             # Private research (gitignored)
 ├── tests/                            # Integration and unit tests
-├── compare_*.py                      # Strategy comparison scripts
-└── test_3month_verification.py       # Verification backtest
+├── backtest.py                       # Main backtest entry point
+├── monitor.py                        # System monitor
+└── run.py                            # System runner
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for detailed component descriptions.
@@ -168,23 +169,25 @@ The research journey (DP20 → exploratory analysis → Wed/Tue discovery) demon
 cp .env.example .env
 # Add your Alpaca API keys to .env
 
-# Run quick 3-month verification
-python3 test_3month_verification.py
-
-# Compare exit strategies
-python3 compare_exits_6month.py
-
-# Compare scanner parameters
-python3 compare_scanner_params_2025.py
-
-# Optimize exit strategy
-python3 compare_exit_optimization_2025.py
+# Run a comparison using the template
+cp backend/examples/strategy_comparison_template.py tmp-scripts/my_comparison.py
+# Edit tmp-scripts/my_comparison.py with your parameters
+python3 tmp-scripts/my_comparison.py
 ```
+
+**Strategy Comparison Template:**
+- See [`backend/examples/strategy_comparison_template.py`](backend/examples/strategy_comparison_template.py)
+- Copy and modify for your own analysis
+- Results can be saved to `docs/backtest-reports/`
+
+**Published Backtest Reports:**
+- [`docs/backtest-reports/`](docs/backtest-reports/) - Detailed performance analysis
+- Multiple strategy comparisons across 2024-2025
+- Trade-by-trade analysis and insights
 
 For comprehensive setup and usage, see:
 - [`QUICKSTART.md`](QUICKSTART.md) - Detailed setup instructions
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) - System architecture and design
-- [`docs/backtest-reports/`](docs/backtest-reports/) - Performance analysis reports
 
 ## Documentation Standards
 
