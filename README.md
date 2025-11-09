@@ -1,23 +1,33 @@
 # Trading Playbook
 
-Python-based quantitative trading backtesting and analysis toolkit for systematic strategy development.
+Python-based quantitative trading backtesting infrastructure for systematic strategy research and development.
 
 ## Overview
 
-**trading-playbook** enables rigorous backtesting of intraday trading strategies with statistical analysis, performance tracking, and AI-powered insights. Currently implementing the **QQQ DP20 strategy** - an intraday trend continuation approach using EMA20 pullbacks with ATR-based risk management.
+**trading-playbook** is a composable backtesting platform designed for rigorous strategy validation. The project demonstrates production-grade engineering practices: hexagonal architecture, walk-forward validation, vectorized computations, and comprehensive testing documentation.
 
-### Key Features
+### Production Strategy: LongEdge Daily Breakout
 
-- **Vectorized Backtesting:** Fast pandas-based simulation over historical data
-- **Comprehensive Journaling:** 29-column trade journal capturing signals, execution, P&L, and analysis metrics
-- **Performance Analytics:** Expectancy, R-multiples, time-of-day effects, volatility regime analysis
-- **AI-Powered Insights:** Claude analyzes backtest results for patterns and optimization recommendations
-- **Hexagonal Architecture:** Clean separation of core strategy logic from data sources and outputs
-- **Multi-Phase Design:** Backtesting → Paper Trading → Live Trading progression
+The **LongEdge** strategy (in `/long-edge/`) is a fully implemented daily breakout momentum system:
+- **Entry:** Minervini/O'Neil style base breakouts with volume confirmation
+- **Exit:** Adaptive trailing stops with MA breaks and momentum detection
+- **Performance:** +1.87% (Q3 2025), 54.5% win rate, controlled risk
+- **Status:** Yellow light - promising but requires more validation data
+
+See: [`/long-edge/README.md`](long-edge/README.md) for full strategy details and backtest results.
+
+### Key Engineering Highlights
+
+- **Composable Architecture:** Mix-and-match scanners, exit strategies, and position sizers
+- **Vectorized Backtesting:** Pandas-based simulation 10x faster than event-driven approaches
+- **Walk-Forward Validation:** Out-of-sample testing to prevent overfitting
+- **Interface Standardization:** Python protocols (PEP 544) for consistent component APIs
+- **Comprehensive Reporting:** Detailed markdown reports with trade-by-trade analysis
+- **Data Management:** Intelligent caching layer (Alpaca API → SQLite/Parquet)
 
 ## Quick Start
 
-**Status:** Design phase complete. Implementation begins with Phase 1 MVP.
+**Current Status:** LongEdge strategy implemented and tested. Additional strategies in research phase.
 
 ### Documentation
 
@@ -45,48 +55,49 @@ Python-based quantitative trading backtesting and analysis toolkit for systemati
 - **Parquet** - Local data caching
 - **Future:** GCP Cloud Run, MongoDB, real-time WebSockets
 
-## Roadmap
+## Development Status
 
-### Phase 1: MVP Backtest (Current)
-- Validate DP20 strategy logic on 2-3 months of data
-- Local execution, Alpaca free tier (IEX data)
-- CSV output with trade journal
-- **Timeline:** 1-2 weeks
+### Completed ✅
+- **LongEdge Strategy:** Fully implemented daily breakout system
+- **Composable Engine:** Mix-and-match scanners and exit strategies
+- **Interface Standardization:** 86% complete - PEP 544 protocols
+- **Backtest Infrastructure:** Walk-forward validation framework
+- **Documentation:** Comprehensive reports and analysis
 
-### Phase 2: Extended Backtest
-- Test on years of historical data
-- Statistical validation (100+ trades)
-- AI analysis reports
-- Parameter optimization
+### In Progress 🔄
+- **Volume Filter Optimization:** Testing 0.0x vs 0.5x vs 1.2x thresholds
+- **Exit Strategy Comparison:** Smart vs Scaled vs Hybrid trailing
+- **Statistical Validation:** Building 50+ trade sample size across multiple periods
 
-### Phase 3: Paper Trading
-- Real-time signal detection
-- Event-driven architecture
-- Paper order execution via Alpaca
-- Live monitoring
-
-### Phase 4: Cloud Deployment
-- GCP Cloud Run (serverless)
-- Automated daily execution
-- Cloud Storage + MongoDB
-- Production monitoring
+### Research Phase 📋
+- **QQQ DP20 Intraday Strategy:** Design complete, implementation pending
+- **Parameter Optimization:** Gradient-free methods for exit tuning
+- **Multi-Strategy Portfolio:** Combining complementary approaches
 
 ## Project Structure
 
 ```
 trading-playbook/
-├── docs/                    # Documentation
-│   ├── strategies/          # Strategy specifications
-│   ├── system-design/       # Technical architecture
-│   ├── analysis/            # Performance frameworks
-│   └── journal-templates/   # Trade journal templates
-├── src/trading_playbook/    # (To be created)
-│   ├── core/                # Pure strategy logic
-│   ├── adapters/            # Data fetchers, writers
-│   └── cli/                 # Command-line interface
-├── tests/                   # (To be created)
-├── data/cache/              # Local parquet cache
-└── output/                  # Backtest results
+├── long-edge/                        # Production strategy (daily breakout momentum)
+│   ├── backend/
+│   │   ├── scanner/                  # Entry signal detection
+│   │   ├── exit_strategies/          # Exit logic (smart, scaled, hybrid)
+│   │   ├── engine/                   # Composable backtest engine
+│   │   └── data/                     # Data clients and caching
+│   ├── docs/
+│   │   ├── backtest-reports/         # Detailed performance analysis
+│   │   ├── session-history/          # Development log
+│   │   └── archived/                 # Abandoned experiments
+│   ├── backtest-results/             # JSON outputs organized by year
+│   └── config/                       # Strategy configurations
+├── docs/                             # Research documentation
+│   ├── strategies/                   # Strategy specifications (QQQ DP20, etc.)
+│   ├── system-design/                # Architecture documentation
+│   └── analysis/                     # Performance frameworks
+├── src/trading_playbook/             # Shared infrastructure
+│   ├── core/                         # Pure strategy logic
+│   └── adapters/                     # Data fetchers, writers
+└── tests/                            # Test suites
 ```
 
 ## Core Concepts
@@ -147,7 +158,9 @@ trading-playbook/
 - Faster execution
 - Can adapt to event-driven for live trading
 
-## Getting Started (When Implemented)
+## Getting Started
+
+### Running LongEdge Strategy
 
 ```bash
 # Install dependencies
@@ -155,22 +168,17 @@ poetry install
 
 # Set up environment
 cp .env.example .env
-# Edit .env with Alpaca API keys
+# Add your Alpaca API keys to .env
 
-# Run backtest
-poetry run python -m trading_playbook.cli.backtest \
-  --symbol QQQ \
-  --start 2025-09-01 \
-  --end 2025-11-04 \
-  --output ./output/trades.csv
-
-# With AI analysis
-poetry run python -m trading_playbook.cli.backtest \
-  --symbol QQQ \
-  --start 2025-09-01 \
-  --end 2025-11-04 \
-  --ai-analysis
+# Run backtest (see long-edge/README.md for details)
+cd long-edge
+python backend/scanner/test_daily_breakout_scanner.py
 ```
+
+For comprehensive setup and usage, see:
+- [`/long-edge/README.md`](long-edge/README.md) - Strategy overview and quickstart
+- [`/long-edge/QUICKSTART.md`](long-edge/QUICKSTART.md) - Detailed setup instructions
+- [`/long-edge/BACKTEST_GUIDE.md`](long-edge/BACKTEST_GUIDE.md) - Running backtests
 
 ## Documentation Standards
 
@@ -191,5 +199,5 @@ MIT License - See individual project LICENSE files for details.
 
 ---
 
-**Status:** Design Complete | **Next:** Begin Phase 1 MVP Implementation
-**Last Updated:** 2025-11-04
+**Status:** LongEdge strategy implemented and tested | Research platform for systematic trading
+**Last Updated:** 2025-11-08
