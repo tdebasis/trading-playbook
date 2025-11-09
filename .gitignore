@@ -228,8 +228,11 @@ logs/
 *.log
 *.out
 
-# Private research (proprietary trading strategies)
+# Private research (proprietary trading strategies - markdown only)
 docs/research-private/
+
+# Private backend code (proprietary strategy implementations)
+backend/private/
 
 # Trading-specific caches
 cache_scaled_exits/
