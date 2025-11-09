@@ -117,22 +117,17 @@ trading-playbook/
 
 **Benefit:** Same core logic for backtesting, paper trading, and live trading.
 
-### DP20 Strategy (Quick Summary)
+### Research Strategies
 
-**Entry Logic:**
-1. Trend filter: QQQ open > 200-day SMA
-2. Time window: 10:00-10:30 AM ET
-3. Pullback: Close below EMA20 (2-min)
-4. Reversal: Close back above EMA20
-5. Strength: Reversal body ≥ 60% of range
-6. Confirmation: Next candle confirms
+**QQQ DP20 Intraday (Research Phase)**
 
-**Risk Management:**
-- Stop: Entry - (1.2 × ATR)
-- Exit: 3:55 PM ET
-- One trade per day max
+Original intraday pullback strategy - research revealed better approaches:
+- **DP20 Results:** Failed (-$874, 6.7% win rate)
+- **Best Discovery:** Wed/Tue 11 AM strategy (+$2,888, 64.7% win rate)
+- **Status:** Research complete, not in production
+- **Documentation:** [research/qqq-intraday/README.md](research/qqq-intraday/README.md)
 
-**Full specification:** [docs/strategies/qqq_dp20_strategy_spec.md](docs/strategies/qqq_dp20_strategy_spec.md)
+The research journey (DP20 → exploratory analysis → Wed/Tue discovery) demonstrates systematic strategy development methodology.
 
 ## Design Decisions
 
