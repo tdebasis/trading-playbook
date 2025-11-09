@@ -6,15 +6,16 @@ Python-based quantitative trading backtesting infrastructure for systematic stra
 
 **trading-playbook** is a composable backtesting platform designed for rigorous strategy validation. The project demonstrates production-grade engineering practices: hexagonal architecture, walk-forward validation, vectorized computations, and comprehensive testing documentation.
 
-### Production Strategy: LongEdge Daily Breakout
+### Production Strategy: Daily Breakout System
 
-The **LongEdge** strategy (in `/long-edge/`) is a fully implemented daily breakout momentum system:
+A fully implemented daily breakout momentum system with multiple scanner variants and exit strategies:
 - **Entry:** Minervini/O'Neil style base breakouts with volume confirmation
-- **Exit:** Adaptive trailing stops with MA breaks and momentum detection
-- **Performance:** +1.87% (Q3 2025), 54.5% win rate, controlled risk
-- **Status:** Yellow light - promising but requires more validation data
+- **Scanners:** Moderate (production), Relaxed, Very Relaxed variants
+- **Exits:** Smart Exits (adaptive trailing), Scaled Exits, Trend Following
+- **Performance:** Multiple validated backtests across 2024-2025 periods
+- **Status:** Active development - continuous strategy optimization
 
-See: [`/long-edge/README.md`](long-edge/README.md) for full strategy details and backtest results.
+See: [`QUICKSTART.md`](QUICKSTART.md) for quick setup and [`ARCHITECTURE.md`](ARCHITECTURE.md) for system design.
 
 ### Key Engineering Highlights
 
@@ -27,7 +28,7 @@ See: [`/long-edge/README.md`](long-edge/README.md) for full strategy details and
 
 ## Quick Start
 
-**Current Status:** LongEdge strategy implemented and tested. Additional strategies in research phase.
+**Current Status:** Daily breakout strategy with composable architecture. Multiple exit strategies implemented and tested.
 
 ### Documentation
 
@@ -58,11 +59,12 @@ See: [`/long-edge/README.md`](long-edge/README.md) for full strategy details and
 ## Development Status
 
 ### Completed ✅
-- **LongEdge Strategy:** Fully implemented daily breakout system
-- **Composable Engine:** Mix-and-match scanners and exit strategies
-- **Interface Standardization:** 86% complete - PEP 544 protocols
-- **Backtest Infrastructure:** Walk-forward validation framework
-- **Documentation:** Comprehensive reports and analysis
+- **Daily Breakout System:** Multiple scanner variants (moderate, relaxed, very relaxed)
+- **Exit Strategies:** Smart Exits, Scaled Exits, Trend Following 75
+- **Composable Engine:** Mix-and-match scanners and exit strategies via registry pattern
+- **Interface Standardization:** Complete - PEP 544 protocols throughout
+- **Backtest Infrastructure:** Comparison framework for strategy evaluation
+- **Documentation:** Comprehensive backtest reports and architecture docs
 
 ### In Progress 🔄
 - **Volume Filter Optimization:** Testing 0.0x vs 0.5x vs 1.2x thresholds
@@ -78,27 +80,31 @@ See: [`/long-edge/README.md`](long-edge/README.md) for full strategy details and
 
 ```
 trading-playbook/
-├── long-edge/                        # Production strategy (daily breakout momentum)
-│   ├── backend/
-│   │   ├── scanner/                  # Entry signal detection
-│   │   ├── exit_strategies/          # Exit logic (smart, scaled, hybrid)
-│   │   ├── engine/                   # Composable backtest engine
-│   │   └── data/                     # Data clients and caching
-│   ├── docs/
-│   │   ├── backtest-reports/         # Detailed performance analysis
-│   │   ├── session-history/          # Development log
-│   │   └── archived/                 # Abandoned experiments
-│   ├── backtest-results/             # JSON outputs organized by year
-│   └── config/                       # Strategy configurations
-├── docs/                             # Research documentation
-│   ├── strategies/                   # Strategy specifications (QQQ DP20, etc.)
-│   ├── system-design/                # Architecture documentation
-│   └── analysis/                     # Performance frameworks
-├── src/trading_playbook/             # Shared infrastructure
-│   ├── core/                         # Pure strategy logic
-│   └── adapters/                     # Data fetchers, writers
-└── tests/                            # Test suites
+├── backend/                          # Core infrastructure
+│   ├── scanner/
+│   │   ├── long/                     # Long position scanners (moderate, relaxed, etc.)
+│   │   └── short/                    # Short position scanners (placeholder)
+│   ├── strategies/
+│   │   ├── long/
+│   │   │   ├── exits/                # Exit strategies (smart, scaled, trend_following)
+│   │   │   └── registry.py           # Strategy factory and registration
+│   │   └── short/                    # Short strategies (placeholder)
+│   ├── engine/                       # Composable backtest engine
+│   ├── execution/                    # Position management and trade execution
+│   ├── data/                         # Data caching and management
+│   ├── interfaces/                   # Protocol definitions (PEP 544)
+│   ├── config/                       # Strategy configurations
+│   └── backtest/                     # Historical backtest scripts
+├── docs/
+│   ├── backtest-reports/             # Performance analysis reports
+│   ├── workflows/                    # Trading workflows
+│   └── research-private/             # Private research (gitignored)
+├── tests/                            # Integration and unit tests
+├── compare_*.py                      # Strategy comparison scripts
+└── test_3month_verification.py       # Verification backtest
 ```
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for detailed component descriptions.
 
 ## Core Concepts
 
@@ -155,25 +161,30 @@ The research journey (DP20 → exploratory analysis → Wed/Tue discovery) demon
 
 ## Getting Started
 
-### Running LongEdge Strategy
+### Running Backtests
 
 ```bash
-# Install dependencies
-poetry install
-
 # Set up environment
 cp .env.example .env
 # Add your Alpaca API keys to .env
 
-# Run backtest (see long-edge/README.md for details)
-cd long-edge
-python backend/scanner/test_daily_breakout_scanner.py
+# Run quick 3-month verification
+python3 test_3month_verification.py
+
+# Compare exit strategies
+python3 compare_exits_6month.py
+
+# Compare scanner parameters
+python3 compare_scanner_params_2025.py
+
+# Optimize exit strategy
+python3 compare_exit_optimization_2025.py
 ```
 
 For comprehensive setup and usage, see:
-- [`/long-edge/README.md`](long-edge/README.md) - Strategy overview and quickstart
-- [`/long-edge/QUICKSTART.md`](long-edge/QUICKSTART.md) - Detailed setup instructions
-- [`/long-edge/BACKTEST_GUIDE.md`](long-edge/BACKTEST_GUIDE.md) - Running backtests
+- [`QUICKSTART.md`](QUICKSTART.md) - Detailed setup instructions
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - System architecture and design
+- [`docs/backtest-reports/`](docs/backtest-reports/) - Performance analysis reports
 
 ## Documentation Standards
 
@@ -194,5 +205,6 @@ MIT License - See individual project LICENSE files for details.
 
 ---
 
-**Status:** LongEdge strategy implemented and tested | Research platform for systematic trading
-**Last Updated:** 2025-11-08
+**Status:** Production-ready backtesting infrastructure | Active strategy development
+**Last Updated:** 2025-11-09
+**Commit:** bc35a83 - Complete repository reorganization to flat structure

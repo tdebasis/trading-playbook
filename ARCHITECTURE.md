@@ -28,16 +28,17 @@ This platform bridges the gap between research and production by treating backte
 
 ### 1. Composable Backtest Engine
 
-**Location:** `/long-edge/backend/engine/backtest_engine.py`
+**Location:** `/backend/engine/backtest_engine.py`
 
 **Purpose:** Orchestrate strategy testing without hardcoding logic
 
 **Interface:**
 ```python
-from engine import BacktestEngine
-from strategies import get_scanner, get_exit_strategy
+from backend.engine.backtest_engine import BacktestEngine
+from backend.scanner.long.daily_breakout_moderate import DailyBreakoutScannerModerate
+from backend.strategies import get_exit_strategy
 
-scanner = get_scanner('daily_breakout', api_key, secret_key)
+scanner = DailyBreakoutScannerModerate(api_key, secret_key)
 exit_strategy = get_exit_strategy('smart_exits')
 
 engine = BacktestEngine(
@@ -59,10 +60,13 @@ results = engine.run(start_date='2024-01-01', end_date='2024-12-31')
 
 ### 2. Scanner Layer (Entry Detection)
 
-**Location:** `/long-edge/backend/scanner/`
+**Location:** `/backend/scanner/long/` (long positions), `/backend/scanner/short/` (short positions - placeholder)
 
 **Implementations:**
-- `daily_breakout_scanner.py` - Minervini/O'Neil base breakouts
+- `daily_breakout_scanner.py` - Minervini/O'Neil base breakouts (original)
+- `daily_breakout_moderate.py` - Moderate risk breakouts (PRODUCTION)
+- `daily_breakout_relaxed.py` - Relaxed entry criteria
+- `daily_breakout_very_relaxed.py` - Very relaxed entry criteria
 - `daily_breakout_scanner_scoring.py` - Adds quality scoring (abandoned)
 
 **Protocol:** Python PEP 544 runtime_checkable
@@ -88,12 +92,12 @@ Alpaca API → Cache Layer → Scanner → Setup Objects → Engine
 
 ### 3. Exit Strategy Layer
 
-**Location:** `/long-edge/backend/exit_strategies/`
+**Location:** `/backend/strategies/long/exits/` (long positions), `/backend/strategies/short/` (short positions - placeholder)
 
 **Implementations:**
 - `smart_exits.py` - Adaptive trailing + MA breaks + momentum (PRODUCTION)
 - `scaled_exits.py` - Profit-taking at 25% increments
-- `hybrid_trailing.py` - Simpler adaptive trailing (DEPRECATED)
+- `trend_following_75.py` - Trend-following with 75% win rate target
 
 **Protocol:**
 ```python
@@ -122,12 +126,11 @@ class ExitStrategyProtocol(Protocol):
 
 ### 4. Data Management Layer
 
-**Location:** `/long-edge/backend/data/`
+**Location:** `/backend/data/`
 
 **Components:**
 - `cache.py` - SQLite + Parquet caching
-- `data_client.py` - Alpaca API wrapper
-- `historical_bars.py` - Batch fetching logic
+- `database.py` - Database utilities
 
 **Caching Strategy:**
 ```
@@ -144,7 +147,7 @@ class ExitStrategyProtocol(Protocol):
 
 ### 5. Position Management
 
-**Location:** `/long-edge/backend/engine/position_manager.py`
+**Location:** `/backend/execution/position_manager.py`
 
 **Responsibilities:**
 - Track open positions (entry, size, cost basis)
@@ -166,12 +169,14 @@ PENDING → OPEN → CLOSED
 ### Hexagonal Architecture (Ports & Adapters)
 
 **Core Domain (Pure Logic):**
-- `/long-edge/backend/scanner/` (entry detection)
-- `/long-edge/backend/exit_strategies/` (exit logic)
-- `/long-edge/backend/engine/` (orchestration)
+- `/backend/scanner/long/` and `/backend/scanner/short/` (entry detection)
+- `/backend/strategies/long/exits/` and `/backend/strategies/short/` (exit logic)
+- `/backend/engine/` (orchestration)
+- `/backend/interfaces/` (protocol definitions)
 
 **Adapters (External Dependencies):**
-- `/long-edge/backend/data/` (Alpaca API, cache)
+- `/backend/data/` (data management and caching)
+- `/backend/execution/` (trade execution)
 - Backtest scripts (CLI entry points)
 - Report generators (JSON, Markdown)
 
@@ -184,30 +189,32 @@ PENDING → OPEN → CLOSED
 
 **Problem:** Hardcoded strategy instantiation in every script
 
-**Solution:** Centralized factory functions
+**Solution:** Centralized factory functions in `backend/strategies/long/registry.py`
 ```python
-# strategies/__init__.py
-_SCANNERS = {}
+# backend/strategies/long/registry.py
 _EXIT_STRATEGIES = {}
 
-def register_scanner(name: str):
-    def decorator(factory_fn):
-        _SCANNERS[name] = factory_fn
-        return factory_fn
+def register_exit_strategy(name: str):
+    def decorator(cls):
+        _EXIT_STRATEGIES[name] = cls
+        return cls
     return decorator
 
-@register_scanner('daily_breakout')
-def create_daily_breakout_scanner(api_key, secret):
-    return DailyBreakoutScanner(api_key, secret)
+@register_exit_strategy('smart_exits')
+class SmartExits:
+    def check_exit(self, position, current_bar, bars_held):
+        # Exit logic...
+        pass
 
-def get_scanner(name: str, *args, **kwargs):
-    return _SCANNERS[name](*args, **kwargs)
+def get_exit_strategy(name: str, *args, **kwargs):
+    return _EXIT_STRATEGIES[name](*args, **kwargs)
 ```
 
 **Usage:**
 ```python
-scanner = get_scanner('daily_breakout', api_key, secret)
-# vs hardcoded: scanner = DailyBreakoutScanner(api_key, secret)
+from backend.strategies import get_exit_strategy
+exit_strategy = get_exit_strategy('smart_exits')
+# vs hardcoded: from backend.strategies.long.exits.smart_exits import SmartExits
 ```
 
 **Benefits:**
@@ -418,35 +425,110 @@ Scanner.scan_for_setups(date='2024-03-15')
 trading-playbook/
 ├── ARCHITECTURE.md              # This file
 ├── README.md                    # Project overview
-├── .env.example                 # Environment template
+├── .env.example                 # Environment template (gitignored)
 │
-├── long-edge/                   # PRODUCTION STRATEGY
-│   ├── README.md                # Strategy overview
-│   ├── backend/
-│   │   ├── scanner/             # Entry detection
-│   │   ├── exit_strategies/     # Exit logic
-│   │   ├── engine/              # Backtest orchestration
-│   │   ├── data/                # Caching + API
-│   │   └── strategies/          # Registry pattern
-│   ├── docs/
-│   │   ├── backtest-reports/    # Performance analysis
-│   │   ├── archived/            # Abandoned experiments
-│   │   └── session-history/     # Development log (.gitignore'd)
-│   ├── backtest-results/        # JSON outputs
-│   │   ├── 2024/
-│   │   ├── 2025/
-│   │   └── experiments/
-│   └── config/                  # Strategy configurations
+├── backend/                     # CORE INFRASTRUCTURE
+│   ├── scanner/                 # Entry detection scanners
+│   │   ├── long/                # Long position scanners
+│   │   │   ├── daily_breakout_scanner.py          # Original Minervini/O'Neil
+│   │   │   ├── daily_breakout_moderate.py         # PRODUCTION scanner
+│   │   │   ├── daily_breakout_relaxed.py          # Relaxed entry criteria
+│   │   │   ├── daily_breakout_very_relaxed.py     # Very relaxed criteria
+│   │   │   ├── daily_breakout_scanner_scoring.py  # With quality scoring (abandoned)
+│   │   │   └── market_scanner.py                  # Market-wide screening
+│   │   └── short/               # Short position scanners (placeholder)
+│   │
+│   ├── strategies/              # Strategy registry and implementations
+│   │   ├── long/                # Long position strategies
+│   │   │   ├── exits/           # Exit strategy implementations
+│   │   │   │   ├── smart_exits.py           # Adaptive trailing (PRODUCTION)
+│   │   │   │   ├── scaled_exits.py          # Profit-taking at 25% increments
+│   │   │   │   └── trend_following_75.py    # 75% win rate target
+│   │   │   └── registry.py      # Strategy registration and factory functions
+│   │   └── short/               # Short position strategies (placeholder)
+│   │
+│   ├── engine/                  # Backtest orchestration
+│   │   ├── backtest_engine.py   # Main backtest engine
+│   │   ├── comparison.py        # Strategy comparison framework
+│   │   └── metrics.py           # Performance metrics calculation
+│   │
+│   ├── execution/               # Trade execution and position management
+│   │   ├── position_manager.py  # Position tracking and management
+│   │   └── trade_executor.py    # Trade execution logic
+│   │
+│   ├── data/                    # Data management and caching
+│   │   ├── cache.py             # SQLite + Parquet caching
+│   │   └── database.py          # Database utilities
+│   │
+│   ├── interfaces/              # Protocol definitions (PEP 544)
+│   │   ├── scanner.py           # ScannerProtocol
+│   │   ├── exit_strategy.py     # ExitStrategyProtocol
+│   │   ├── position_sizer.py    # PositionSizerProtocol
+│   │   ├── position.py          # Position data structures
+│   │   └── backtest.py          # BacktestProtocol
+│   │
+│   ├── config/                  # Strategy configurations
+│   │   └── universe.py          # Stock universe definitions
+│   │
+│   ├── brain/                   # ML and optimization (future)
+│   │   └── claude_engine.py     # AI-powered analysis
+│   │
+│   ├── api/                     # API endpoints (future)
+│   │
+│   ├── core/                    # Core utilities
+│   │   └── orchestrator.py      # System orchestration
+│   │
+│   ├── backtest/                # Historical backtest scripts
+│   │   ├── tests/               # Test suite
+│   │   └── *.py                 # Various backtest experiments
+│   │
+│   └── examples/                # Example usage scripts
+│       ├── compare_exits.py     # Exit strategy comparison
+│       └── simple_backtest.py   # Simple backtest example
 │
-├── docs/                        # RESEARCH DOCS
-│   ├── strategies/              # QQQ DP20 spec (not implemented)
-│   ├── system-design/           # Architecture docs
-│   └── analysis/                # Performance frameworks
+├── docs/                        # DOCUMENTATION
+│   ├── backtest-reports/        # Performance analysis reports
+│   │   ├── 2024-Q1-hybrid-trailing.md
+│   │   ├── 2024-Q2Q3-exit-strategy-comparison-executed-2025-11-08.md
+│   │   ├── 2025-08-10-smart-exits.md
+│   │   ├── 2025-Jan-Nov-scanner-parameter-comparison-executed-2025-11-09.md
+│   │   └── 2025-exit-optimization-trend-following-75-executed-2025-11-09.md
+│   ├── archived/                # Abandoned experiments documentation
+│   ├── workflows/               # Trading workflows
+│   └── research-private/        # Private research (GITIGNORED)
+│       └── session-history/     # Development session logs
 │
-└── src/trading_playbook/        # SHARED INFRASTRUCTURE
-    ├── core/                    # Pure logic
-    └── adapters/                # Data fetchers
+├── tests/                       # INTEGRATION TESTS
+│   ├── backtest_tests/          # Backtest validation tests
+│   ├── volume_tests/            # Volume filter tests
+│   ├── test_composable_engine.py
+│   ├── test_exit_strategy.py
+│   ├── test_interface_integration.py
+│   └── test_scaled_exits.py
+│
+├── scripts/                     # UTILITY SCRIPTS
+│   ├── analysis/                # Analysis scripts
+│   └── operations/              # Operational scripts
+│
+├── compare_*.py                 # STRATEGY COMPARISON SCRIPTS (root level)
+│   ├── compare_exits_6month.py
+│   ├── compare_scanner_params_2025.py
+│   └── compare_exit_optimization_2025.py
+│
+├── test_3month_verification.py  # Verification backtest
+├── backtest.py                  # Main backtest entry point
+├── run.py                       # System runner
+├── monitor.py                   # System monitor
+└── start_trading.sh             # Trading system startup script
 ```
+
+**Key Organizational Principles:**
+
+1. **Direction-Based Organization**: Scanners and strategies are organized by long/short direction
+2. **Backend Centralization**: All core logic lives in `/backend/`
+3. **Security**: Private research and sensitive data gitignored in `docs/research-private/`
+4. **Comparison Scripts**: Strategy comparison scripts at root level for easy access
+5. **Modularity**: Clear separation between scanners, strategies, execution, and data layers
 
 ---
 
@@ -460,5 +542,6 @@ trading-playbook/
 
 ---
 
-**Last Updated:** 2025-11-08
+**Last Updated:** 2025-11-09
 **Author:** Engineering-focused backtesting platform
+**Commit:** bc35a83 - Complete repository reorganization to flat structure

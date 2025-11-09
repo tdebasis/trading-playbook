@@ -219,21 +219,17 @@ cache_*/
 
 # Backtest results (contains strategy performance data)
 backtest-results/
-long-edge/backtest-results/
 
 # Logs (may contain sensitive execution data)
 logs/
-long-edge/logs/
 *.log
 *.out
 
 # Private research (proprietary trading strategies)
 docs/research-private/
-long-edge/docs/research-private/
 
 # Trading-specific caches
 cache_scaled_exits/
-long-edge/cache_scaled_exits/
 
 # macOS metadata
 .DS_Store
