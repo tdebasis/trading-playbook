@@ -1,7 +1,0 @@
-# Ignore all cache contents
-cache/
-cache_*/
-*_cache/
-*.parquet
-*.db
-*.sqlite
