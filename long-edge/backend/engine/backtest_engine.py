@@ -206,6 +206,43 @@ class BacktestEngine:
         slots = self.max_positions - len(self.positions)
         for candidate in candidates[:slots]:
             entry_price = candidate.entry_price
+
+            # TODO: REPLACE WITH PROFESSIONAL POSITION SIZING
+            #
+            # Current approach (NAIVE):
+            # - Fixed 30% of capital per position
+            # - No risk-based sizing (ignores stop loss distance)
+            # - No total exposure control (3 positions = 90% deployed)
+            # - No portfolio heat management
+            #
+            # Professional approach (FUTURE):
+            # 1. RISK-BASED SIZING:
+            #    Position size = (Account Risk % × Capital) / (Entry - Stop)
+            #    Example: (2% × $100K) / ($100 - $92) = $2,000 risk / $8 = 250 shares
+            #
+            # 2. EXPONENTIAL QUALITY-BASED RISK:
+            #    Grade A (9-10): 8% account risk (rare, highest conviction)
+            #    Grade B (7-8):  5% account risk (strong setup)
+            #    Grade C (5-6):  2% account risk (marginal, selective)
+            #    Grade D (<5):   Skip entirely
+            #
+            # 3. TOTAL EXPOSURE CONTROLS:
+            #    - Max 20% total capital deployed at once (professional standard)
+            #    - Max 15% total account risk (sum of all position risks)
+            #    - Exponential aspect: 80% of profits from 20% of trades (Grade A)
+            #
+            # 4. PORTFOLIO HEAT MANAGEMENT:
+            #    - Track cumulative risk across all open positions
+            #    - Reduce position size when heat is high
+            #    - Increase size when heat is low and Grade A setup appears
+            #
+            # Implementation:
+            # - Use PositionSizerProtocol (already defined in interfaces/position_sizer.py)
+            # - Replace this inline calculation with: position_sizer.calculate_size(...)
+            # - Scanner should provide quality score (0-10) for risk allocation
+            # - Kelly Criterion could optimize exact risk ratios
+            #
+            # Current: Fixed 2.4% risk (30% position, -8% stop) for all trades
             position_value = self.capital * self.position_size_percent
             shares = int(position_value / entry_price)
 
