@@ -55,7 +55,7 @@ class BacktestEngine:
         data_client: StockHistoricalDataClient,
         starting_capital: float = 100000,
         max_positions: int = 3,
-        position_size_percent: float = 0.30
+        position_size_percent: float = 0.0667
     ):
         """
         Initialize backtest engine.
@@ -66,7 +66,8 @@ class BacktestEngine:
             data_client: Alpaca data client (can be CachedDataClient)
             starting_capital: Starting capital in dollars
             max_positions: Maximum concurrent positions
-            position_size_percent: Position size as fraction of capital (e.g., 0.30 = 30%)
+            position_size_percent: Position size as fraction of capital (e.g., 0.0667 = 6.67%)
+                                   Default ensures max 20% total exposure (3 positions × 6.67%)
         """
         self._scanner = scanner
         self._exit_strategy = exit_strategy
@@ -210,9 +211,9 @@ class BacktestEngine:
             # TODO: REPLACE WITH PROFESSIONAL POSITION SIZING
             #
             # Current approach (NAIVE):
-            # - Fixed 30% of capital per position
+            # - Fixed 6.67% of capital per position
             # - No risk-based sizing (ignores stop loss distance)
-            # - No total exposure control (3 positions = 90% deployed)
+            # - Total exposure capped at 20% (3 positions × 6.67%)
             # - No portfolio heat management
             #
             # Professional approach (FUTURE):
@@ -242,7 +243,8 @@ class BacktestEngine:
             # - Scanner should provide quality score (0-10) for risk allocation
             # - Kelly Criterion could optimize exact risk ratios
             #
-            # Current: Fixed 2.4% risk (30% position, -8% stop) for all trades
+            # Current: Fixed 0.53% risk per position (6.67% position, -8% stop)
+            # Max total risk: 1.6% with 3 positions (well below professional 15% max)
             position_value = self.capital * self.position_size_percent
             shares = int(position_value / entry_price)
 
