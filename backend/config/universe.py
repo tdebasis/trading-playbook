@@ -73,6 +73,46 @@ MEGA_CAPS = [
     'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA'
 ]
 
+# Penny Stocks (for short selling parabolic spikes)
+# Stocks under $10, sufficient liquidity for shorting
+PENNY_STOCKS = [
+    # Cannabis
+    'SNDL',   # Sundial Growers
+    'TLRY',   # Tilray
+    'ACB',    # Aurora Cannabis
+    'CGC',    # Canopy Growth
+
+    # Biotech / Pharma
+    'VXRT',   # Vaxart
+    'OCGN',   # Ocugen
+    'ATOS',   # Atossa Therapeutics
+
+    # EV / Clean Energy
+    'NKLA',   # Nikola
+    'QS',     # QuantumScape
+    'BLNK',   # Blink Charging
+    'CHPT',   # ChargePoint
+    'PLUG',   # Plug Power
+    'FCEL',   # FuelCell Energy
+
+    # Tech / Growth
+    'SOFI',   # SoFi Technologies
+    'UPST',   # Upstart
+    'HOOD',   # Robinhood
+    'OPEN',   # Opendoor
+
+    # Meme / Retail
+    'WISH',   # ContextLogic
+    'CLOV',   # Clover Health
+    'WKHS',   # Workhorse
+
+    # Other
+    'PTON',   # Peloton (if < $10)
+    'DKNG',   # DraftKings
+    'RIOT',   # Riot Blockchain
+    'MARA',   # Marathon Digital
+]
+
 # Extended universe (for future expansion to 50+ stocks)
 EXTENDED_WATCHLIST = WATCHLIST + [
     # Additional tech
@@ -119,7 +159,7 @@ def get_universe(name: str = 'default'):
     Get a stock universe by name.
 
     Args:
-        name: 'default', 'tech', 'high_vol', 'mega_caps', 'extended'
+        name: 'default', 'tech', 'high_vol', 'mega_caps', 'extended', 'penny_stocks'
 
     Returns:
         List of stock symbols
@@ -130,6 +170,7 @@ def get_universe(name: str = 'default'):
         'high_vol': HIGH_VOLATILITY,
         'mega_caps': MEGA_CAPS,
         'extended': EXTENDED_WATCHLIST,
+        'penny_stocks': PENNY_STOCKS,
     }
 
     return universes.get(name, WATCHLIST)
@@ -162,6 +203,11 @@ def get_universe_info():
             'symbols': EXTENDED_WATCHLIST,
             'count': len(EXTENDED_WATCHLIST),
             'description': 'Expanded 50+ stock universe'
+        },
+        'penny_stocks': {
+            'symbols': PENNY_STOCKS,
+            'count': len(PENNY_STOCKS),
+            'description': 'Penny stocks (<$10) for short selling parabolic spikes'
         }
     }
 
