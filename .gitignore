@@ -217,6 +217,9 @@ cache/
 cache_*/
 *_cache/
 
+# Historical data (proprietary datasets)
+data/historical/
+
 # Backtest results (contains strategy performance data)
 backtest-results/
 
